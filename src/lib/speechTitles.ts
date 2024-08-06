@@ -95,12 +95,22 @@ export const segues = [
     "I know it's a bit of a tangent, but ____________ is actually really relevant to our discussion."
 ];
 
-export function pickFour() {
+export function pickThree() {
     const titles = [];
 
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 3; i++) {
         titles.push(speechTitles[Math.floor(Math.random() * speechTitles.length)]);
     }
 
     return titles;
+}
+
+export function twoSegues() {
+    const s = [];
+
+    for (let i = 0; i < 2; i++) {
+        s.push(segues[Math.floor(Math.random() * segues.length)]);
+    }
+
+    return s;
 }

@@ -1,6 +1,6 @@
 <script lang="ts">
     import Button from "$lib/components/Button.svelte";
-    import { pickFour } from "$lib/speechTitles";
+    import { pickThree } from "$lib/speechTitles";
 
     import { onMount } from "svelte";
 
@@ -21,7 +21,7 @@
 
         socket.on("gameStart", () => {
             view = "titles";
-            titles = pickFour();
+            titles = pickThree();
         });
     });
 
@@ -41,6 +41,7 @@
     function submitTitle() {
         const final = selectedTitle.replace("____________", titleBlank);
         socket.emit("sendTitle", final);
+        view = "gamewait";
     }
 </script>
 
@@ -101,6 +102,9 @@
                         >
                     {/each}
                 {/if}
+            {:else if view === "gamewait"}
+                <h1 class="large font-black text-6xl">Submitted!</h1>
+                <p>Wait until you see your name on screen for when it's your big speech time.</p>
             {/if}
         </div>
     </div>

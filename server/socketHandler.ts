@@ -1,6 +1,8 @@
 import type { playerData } from '$lib/types';
+import { first, insert } from 'blinkdb';
 import { Server } from 'socket.io';
 import type { HttpServer } from 'vite';
+import { gameTable, titlesTable, usersTable } from './db';
 
 export default function injectSocketIO(server: HttpServer | null) {
     if (server === null) return;
@@ -11,26 +13,35 @@ export default function injectSocketIO(server: HttpServer | null) {
         }
     });
 
-    let roomsData = new Map();
-
     io.on('connection', (socket) => {
-        socket.on('joinRoom', (data: playerData) => {
+        socket.on('joinRoom', async (data: playerData) => {
             data['id'] = socket.id;
             socket.data = data;
-            let roomData = roomsData.get(data.code);
-            if (!roomData && data.role === "host") {
-                roomsData.set(data.code, {
-                    players: [data]
-                })
-            } else {
-                roomData.players.push(data);
-                roomsData.set(data.code, roomData);
-            }
-            //Can't have two hosts
-            if (roomData && data.role === "host") return;
 
-            console.log(roomsData.get(data.code))
-            console.log(data)
+            const room = await first(gameTable, {
+                where: {
+                    id: data.code
+                }
+            })
+
+            console.log(room)
+
+            if (room && data.role === "host") return;
+
+            if (!room && data.role === "host") {
+                await insert(gameTable, {
+                    id: data.code,
+                    host: socket.id
+                })
+            }
+
+            await insert(usersTable, {
+                id: socket.id,
+                code: data.code,
+                username: data.username,
+                role: data.role
+            }).catch(() => {})
+
             socket.join(data.code);
             socket.to(data.code).emit('playerJoined', { username: data.username })
         })
@@ -40,10 +51,22 @@ export default function injectSocketIO(server: HttpServer | null) {
             socket.to(socket.data.code).emit("gameStart");
         })
 
-        socket.on('sendTitle', (title) => {
-            const roomData = roomsData.get(socket.data.code);
-            console.log(socket.data, title)
-            socket.to(roomData.players[0].id).emit('titleSelected', socket.data.username);
+        socket.on('sendTitle', async (title) => {
+            const room = await first(gameTable, {
+                where: {
+                    id: socket.data.code
+                }
+            })
+
+            if (!room) return;
+
+            await insert(titlesTable, {
+                id: socket.id,
+                code: socket.data.code,
+                title: title
+            })
+
+            socket.to(room.host).emit('titleSelected', { id: socket.id, code: socket.data.code, username: socket.data.username, title: title });
         })
     });
 

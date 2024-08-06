@@ -1,16 +1,22 @@
 <script lang="ts">
 	import Button from "$lib/components/Button.svelte";
 	import PlayerCard from "$lib/components/PlayerCard.svelte";
+	import PlayIcon from 'lucide-svelte/icons/play';
+	import TypeIcon from 'lucide-svelte/icons/type';
+	import CameraIcon from 'lucide-svelte/icons/camera';
+	import SquareIcon from 'lucide-svelte/icons/square';
+
 	import { onMount } from "svelte";
 
 	import { socket } from "$lib/websocketConnection";
-	import type { playerData } from "$lib/types";
+	import type { playerData, Title } from "$lib/types";
 
 	const code = Math.random().toString(36).slice(2, 6).toUpperCase();
 
-	let view = "join";
+	let view = "game";
 
 	let players: playerData[] = [];
+	let titles: Title[] = [];
 
 	let titleSelectedPlayers = 0;
 
@@ -26,12 +32,15 @@
 			players = [...players, data];
 		});
 
-		socket.on("titleSelected", (username: string) => {
+		socket.on("titleSelected", (data: { id: string, code: string, username: string, title: string}) => {
 			for (let i = 0; i < players.length; i++) {
-				if (players[i].username === username) players[i].title = true;
-				titleSelectedPlayers++;
-				if (titleSelectedPlayers === players.length) {
-					view = "speechIntro";
+				if (players[i].username === data.username) {
+					players[i].title = true;
+					titleSelectedPlayers++;
+					titles.push(data);
+					if (titleSelectedPlayers === players.length) {
+						view = "speechIntro";
+					}
 				}
 			}
 		});
@@ -76,6 +85,42 @@
 							>{player.username}</PlayerCard
 						>
 					{/each}
+				</div>
+			{:else if view === "game"}
+				<div class="flex space-x-4">
+					<div class="flex flex-col space-y-4">
+						<div class="bg-white rounded-lg shadow-md w-full p-6 flex justify-center h-[600px] max-w-[1000px] items-center overflow-hidden">
+							<h1 class="uppercase font-black text-6xl">Hello, my name is ... and my talk is ...</h1>
+							<!-- <img src="/images/game/76126.jpg"> -->
+						</div>
+						<div class="flex space-x-1">
+							<div class=" bg-white rounded-full w-12 h-12 flex">
+								<PlayIcon class="m-auto justify-center" />
+							</div>
+							<div class=" bg-white rounded-full w-12 h-12 flex">
+								<TypeIcon class="m-auto justify-center" />
+							</div>
+							<div class=" bg-white rounded-full w-12 h-12 flex">
+								<CameraIcon class="m-auto justify-center" />
+							</div>
+							<div class=" bg-white rounded-full w-12 h-12 flex">
+								<TypeIcon class="m-auto justify-center" />
+							</div>
+							<div class=" bg-white rounded-full w-12 h-12 flex">
+								<CameraIcon class="m-auto justify-center" />
+							</div>
+							<div class=" bg-white rounded-full w-12 h-12 flex">
+								<TypeIcon class="m-auto justify-center" />
+							</div>
+							<div class=" bg-white rounded-full w-12 h-12 flex">
+								<CameraIcon class="m-auto justify-center" />
+							</div>
+							<div class=" bg-white rounded-full w-12 h-12 flex">
+								<SquareIcon class="m-auto justify-center" />
+							</div>
+						</div>
+					</div>
+					<div>score slider</div>
 				</div>
 			{/if}
 		</div>
