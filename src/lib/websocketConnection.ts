@@ -1,6 +1,5 @@
 import ioClient from 'socket.io-client';
-const ENDPOINT = 'http://localhost:5173';
 
-const s = ioClient(ENDPOINT);
+const s = ioClient("/");
 
 export const socket = s;

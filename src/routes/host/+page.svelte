@@ -13,7 +13,7 @@
 
 	const code = Math.random().toString(36).slice(2, 6).toUpperCase();
 
-	let view = "game";
+	let view = "join";
 
 	let players: playerData[] = [];
 	let titles: Title[] = [];
