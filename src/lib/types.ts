@@ -3,16 +3,20 @@ export interface playerData {
     code: string,
     username: string,
     title?: boolean,
+    played?: boolean,
+    presented?: boolean,
     role: "player" | "host"
 }
 
 export interface Game {
     id: string,
-    host: string
+    host: string,
+    presenter?: string,
+    assistant?: string
 }
 
 export interface Title {
     id: string,
     code: string,
-    title: string
+    speech: string
 }

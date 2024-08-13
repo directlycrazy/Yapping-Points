@@ -3,11 +3,11 @@
     export let role = "Player";
 </script>
 
-<div class="p-6 bg-white text-black rounded-lg text-center">
+<div class="px-6 py-10 shadow-md bg-white text-black rounded-lg text-center">
     {#if loading}
         <div class="loader mx-auto mb-2"></div>
     {/if}
-    <h1 class="large font-bold text-2xl"><slot /></h1>
+    <h1 class="large font-bold text-3xl"><slot /></h1>
     <p class="font-semibold">{role}</p>
 </div>
 
