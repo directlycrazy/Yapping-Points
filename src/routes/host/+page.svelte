@@ -236,9 +236,9 @@
 										</div>
 									{/if}
 								</div>
-								<div class="w-[50px] h-full bg-gray-200 rounded-lg shadow-md">
-									<div class="h-[75%] transition bg-white rounded-t-lg"></div>
-								</div>
+								<!-- <div class="w-[50px] h-full bg-gray-200 rounded-lg shadow-md">
+									<div class="h-[50%] transition bg-white rounded-t-lg"></div>
+								</div> -->
 							</div>
 							<div class="flex space-x-1">
 								{#each {length: 8} as _, i}
