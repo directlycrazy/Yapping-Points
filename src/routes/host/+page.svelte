@@ -87,7 +87,7 @@
 			setTimeout(() => {
 				presenterIndex++;
 				startSpeech();
-			}, 3000)
+			}, 8000)
 		} else if (slide % 2 === 0) {
 			//Image slides
 			console.log(images)
