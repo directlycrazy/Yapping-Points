@@ -12,7 +12,8 @@ export interface Game {
     id: string,
     host: string,
     presenter?: string,
-    assistant?: string
+    assistant?: string,
+    view?: string
 }
 
 export interface Title {

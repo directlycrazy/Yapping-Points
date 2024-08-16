@@ -15,6 +15,7 @@
 	const code = Math.random().toString(36).slice(2, 6).toUpperCase();
 
 	let view = "join";
+	let hostname = "";
 
 	let players: playerData[] = [];
 	let titles: Title[] = [];
@@ -51,13 +52,17 @@
 		slide = 0;
 		images = [];
 		speech = selectSpeech();
+		// if (!titles.length) return changeView('end');
 		// presenter = players[presenterIndex];
 		// assistantIndex--;
 		// assistant = players[assistantIndex];
 		changeView("presenting")
 		setTimeout(() => {
 			socket.emit('presenterScreen', presenter);
-			socket.emit('assistantScreen', assistant);
+			let a = assistant;
+			//Ensure presenter can't be the assistant
+			if (presenter.id === assistant.id) a = players[0];
+			socket.emit('assistantScreen', a);
 			changeView("speech");
 			slideData();
 		}, 5000)
@@ -73,6 +78,7 @@
 	function changeView(v: string) {
 		view = "";
 		setTimeout(() => {
+			socket.emit('roomView', { view: v === "titles" ? "titles" : "gamewait" });
 			view = v;
 		}, 1500)
 	}
@@ -87,15 +93,15 @@
 			setTimeout(() => {
 				presenterIndex++;
 				startSpeech();
-			}, 8000)
+			}, 5000)
 		} else if (slide % 2 === 0) {
 			//Image slides
 			console.log(images)
 			screenImg = `https://cdn.inspare.cc/yp/${images[(slide / 2) - 1]}`
 		} else {
+			//Text slides
 			console.log((slide - 1) / 2)
 			screenText = speech[(slide - 1) / 2]
-			//Text slides
 		}
 	}
 
@@ -109,6 +115,8 @@
 			// 	titles.push({id: String(i), code: code, title: `title ${i}`})
 			// }
 			
+		hostname = window.location.host;
+
 		socket.emit("joinRoom", { code: code, username: "Host", role: "host", played: false, presented: false });
 
 		socket.on("connect", () => {
@@ -156,7 +164,25 @@
 				startSpeech();
 			}
 		});
+
+		socket.on('disconnectPlayer', (data: {id: string}) => {
+			for (let i = 0; i < players.length; i++) {
+				if (data.id === players[i].id) {
+					players.splice(i, 1);
+				}
+			}
+		})
 	});
+
+	function skipTitles() {
+		shuffleTitlesPlayers();
+		startSpeech();
+	}
+
+	function skipPresentation() {
+		presenterIndex++;
+		startSpeech();
+	}
 
 	function startGame() {
 		socket.emit("gameStart");
@@ -170,8 +196,8 @@
 		<div class="flex flex-col space-y-3 ml-20 justify-self-end">
 			{#if view === "join"}
 				<div class="space-y-3" transition:fly|local={{ x: 0, y: 200, duration: 700 }}>
-					<h1 class="large font-semibold text-5xl">
-						Game Code
+					<h1 class="large font-semibold text-4xl">
+						Join at <b>{hostname}/play</b>
 					</h1>
 					<span class="large text-7xl font-black animate-pulse">{code}</span>
 					<p>
@@ -202,6 +228,9 @@
 							>
 						{/each}
 					</div>
+					<button on:click={skipTitles}>
+						<Button>Skip</Button>
+					</button>
 				</div>
 			{:else if view === "presenting"}
 				<div transition:fly|local={{ x: 0, y: 200, duration: 700 }}>
@@ -225,7 +254,7 @@
 			{:else if view === "speech"}
 				<div transition:fly|local={{ x: 0, y: 200, duration: 700 }}>
 					<div class="flex space-x-4">
-						<div class="flex flex-col space-y-4">
+						<div class="space-y-4">
 							<div class="flex gap-x-5">
 								<div class="bg-white rounded-lg shadow-md p-0 flex justify-center h-[600px] w-[1000px] items-center overflow-hidden">
 									{#if slide % 2 === 0 && slide !== 0}
@@ -255,9 +284,17 @@
 									</div>
 								{/each}
 							</div>
+							<button on:click={skipPresentation}>
+								<Button>Skip</Button>
+							</button>
 						</div>
 					</div>
 				</div>
+			{:else if view === "end"}
+				<h1 class="large font-black text-6xl">Game Over</h1>
+				<p>
+					Thank you for playing!
+				</p>
 			{/if}
 		</div>
 	</div>

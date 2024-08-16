@@ -1,5 +1,5 @@
 import type { playerData } from '$lib/types';
-import { first, insert, update } from 'blinkdb';
+import { first, insert, remove, update } from 'blinkdb';
 import { Server } from 'socket.io';
 import type { HttpServer } from 'vite';
 import { gameTable, titlesTable, usersTable } from './db';
@@ -10,6 +10,9 @@ export default function injectSocketIO(server: HttpServer | null) {
     const io = new Server(server, {
         cors: {
             origin: "*"
+        },
+        connectionStateRecovery: {
+            maxDisconnectionDuration: 2 * 60 * 1000
         }
     });
 
@@ -70,13 +73,49 @@ export default function injectSocketIO(server: HttpServer | null) {
             socket.to(user.id).emit('changeView', { view: "assistant" })
         })
 
+        socket.on('requestView', async () => {
+            const room = await first(gameTable, {
+                where: {
+                    id: socket.data.code
+                }
+            })
+
+            if (!room) return;
+
+            if (room.presenter === socket.id) return socket.emit('changeView', { view: "presenter" });
+            if (room.assistant === socket.id) return socket.emit('changeView', { view: "assistant" });
+
+            //No view exists
+            if (!room.view) return;
+
+            //Change to the view other players have
+            socket.emit('changeView', { view: room.view });
+        })
+
+        socket.on('roomView', async (data: { view: string }) => {
+            const room = await first(gameTable, {
+                where: {
+                    id: socket.data.code
+                }
+            })
+
+            if (room && room.host !== socket.id) return;
+
+            console.log(data.view);
+
+            await update(gameTable, {
+                id: socket.data.code,
+                view: data.view
+            })
+        })
+
         socket.on('changeSlide', async (direction: "forward" | "back") => {
             const room = await first(gameTable, {
                 where: {
                     id: socket.data.code
                 }
             })
-            
+
             // console.log(room.host)
             // console.log(socket.id, room.presenter)
             if (room && socket.id === room.presenter && (direction === "forward" || direction === "back")) {
@@ -115,6 +154,34 @@ export default function injectSocketIO(server: HttpServer | null) {
             socket.to(room.host).emit('titleSelected', { id: socket.id, code: socket.data.code, username: socket.data.username, speech: title });
         })
     });
+
+    io.on('disconnect', async (socket) => {
+        console.log('Client disconnected');
+
+        //Check if ever in room
+        if (!socket.data) return;
+
+        const room = await first(gameTable, {
+            where: {
+                id: socket.data.code
+            }
+        })
+
+        if (!room) return;
+
+        const user = await first(usersTable, {
+            where: {
+                id: socket.id
+            }
+        })
+
+        if (!user) return;
+
+        await remove(usersTable, { id: socket.id });
+        socket.to(room.host).emit('disconnectPlayer', { id: socket.id });
+
+        console.log(user);
+    })
 
     console.log('SocketIO injected');
 }

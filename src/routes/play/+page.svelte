@@ -15,7 +15,7 @@
 
     let titles: string[] = [];
     let segues: string[] = [];
-    let images: string[] = [];
+    let images: string[] = fourImages();
 
     let toSubmit: string[] = [];
     let selectedTitle = "";
@@ -27,6 +27,9 @@
     onMount(() => {
         socket.on("connect", () => {
             console.log("Websocket connected");
+            if (socket.recovered) {
+                socket.emit('requestView');
+            }
         });
 
         socket.on("gameStart", () => {
@@ -40,11 +43,15 @@
         })
 
         socket.on('changeView', (data: { view: string }) => {
+            //Prevent backwards progression
+            if (view === "gamewait" && (data.view !== "presenter" && data.view !== "assistant")) return;
             console.log(data)
             view = data.view;
-            if (view === "assistant") {
-                images = fourImages();
-            }
+        })
+
+        //Check for view changes when focused
+        window.addEventListener('focus', () => {
+            socket.emit('requestView');
         })
     });
 
@@ -172,9 +179,12 @@
                 <div class="grid grid-cols-2">
                     {#each images as image, i}
                         <button class="p-2" on:click={() => {selectImage(i)}}>
-                            <img src={`https://cdn.inspare.cc/yp/${image}`} alt="point">
+                            <img class="rounded-lg shadow-md" src={`https://cdn.inspare.cc/yp/${image}`} alt="point">
                         </button>
                     {/each}
+                    {#if images.length === 0}
+                        <p>You can now sit back and relax.</p>
+                    {/if}
                 </div>
             {/if}
         </div>
