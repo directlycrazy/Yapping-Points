@@ -22,10 +22,7 @@
 
 	$: presenterIndex = 0;
 	$: presenter = players[presenterIndex]
-	// $: assistantIndex = players.length - 1;
 	$: assistant = players[players.length - (presenterIndex + 1)];
-
-	console.log(presenter, assistant)
 
 	let titleSelectedPlayers = 0;
 	let slide = 0;
@@ -45,17 +42,12 @@
 
 		shuffleArr(players);
 		shuffleArr(titles);
-		console.log(players, titles)
 	}
 
 	function startSpeech() {
 		slide = 0;
 		images = [];
 		speech = selectSpeech();
-		// if (!titles.length) return changeView('end');
-		// presenter = players[presenterIndex];
-		// assistantIndex--;
-		// assistant = players[assistantIndex];
 		changeView("presenting")
 		setTimeout(() => {
 			socket.emit('presenterScreen', presenter);
@@ -71,7 +63,6 @@
 	function selectSpeech() {
 		let title = titles[0];
 		titles.shift();
-		console.log(title.speech)
 		return JSON.parse(title.speech);
 	}
 
@@ -96,25 +87,14 @@
 			}, 5000)
 		} else if (slide % 2 === 0) {
 			//Image slides
-			console.log(images)
 			screenImg = `https://cdn.inspare.cc/yp/${images[(slide / 2) - 1]}`
 		} else {
 			//Text slides
-			console.log((slide - 1) / 2)
 			screenText = speech[(slide - 1) / 2]
 		}
 	}
 
 	onMount(() => {
-		// setInterval(() => {
-		// 	slide++;
-		// }, 2500)
-		//TESTING PURPOSES ONLY
-		// for (let i = 0; i < 1; i++) {
-			// 	players.push({ id: String(i), code: code, username: "player" + i, role: "player", title: true })
-			// 	titles.push({id: String(i), code: code, title: `title ${i}`})
-			// }
-			
 		hostname = window.location.host;
 
 		socket.emit("joinRoom", { code: code, username: "Host", role: "host", played: false, presented: false });
@@ -124,7 +104,6 @@
 		});
 
 		socket.on("playerJoined", (data: playerData) => {
-			console.log(data.username);
 			players = [...players, data];
 		});
 
@@ -141,7 +120,6 @@
 		})
 
 		socket.on('selectImage', img => {
-			console.log(img)
 			images.push(img);
 		})
 
@@ -151,14 +129,12 @@
 			for (let i = 0; i < players.length; i++) {
 				if (players[i].username === data.username) {
 					players[i].title = true;
-					// titleSelectedPlayers++;
 					titles.push(data);
 				}
 				
 				if (players[i].title) titleSelectedPlayers++;
 			}
 			
-			console.log(titleSelectedPlayers, players.length);
 			if (titleSelectedPlayers === players.length) {
 				shuffleTitlesPlayers();
 				startSpeech();
@@ -187,7 +163,6 @@
 	function startGame() {
 		socket.emit("gameStart");
 		changeView("titles")
-		// view = "titles";
 	}
 </script>
 
@@ -265,9 +240,6 @@
 										</div>
 									{/if}
 								</div>
-								<!-- <div class="w-[50px] h-full bg-gray-200 rounded-lg shadow-md">
-									<div class="h-[50%] transition bg-white rounded-t-lg"></div>
-								</div> -->
 							</div>
 							<div class="flex space-x-1">
 								{#each {length: 8} as _, i}

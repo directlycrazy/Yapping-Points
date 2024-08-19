@@ -45,7 +45,6 @@
         socket.on('changeView', (data: { view: string }) => {
             //Prevent backwards progression
             if (view === "gamewait" && (data.view !== "presenter" && data.view !== "assistant")) return;
-            console.log(data)
             view = data.view;
         })
 
@@ -74,7 +73,6 @@
     }
 
     function selectImage(img: number) {
-        // if (imageStep === 3) return;
         imageStep++;
         socket.emit('selectImage', images[img]);
         if (imageStep <= 2) {
@@ -95,7 +93,6 @@
         selectedTitle = segues[blanksStep - 1];
 
         if (blanksStep === 3) {
-            console.log(toSubmit)
             socket.emit("sendTitle", JSON.stringify(toSubmit));
             view = "gamewait";
         }

@@ -12,31 +12,33 @@ export default function injectSocketIO(server: HttpServer | null) {
             origin: "*"
         },
         connectionStateRecovery: {
-            maxDisconnectionDuration: 2 * 60 * 1000
+            maxDisconnectionDuration: 30 * 1000
         }
     });
 
     io.on('connection', (socket) => {
         socket.on('joinRoom', async (data: playerData) => {
-            data['id'] = socket.id;
-            socket.data = data;
-
             const room = await first(gameTable, {
                 where: {
                     id: data.code
                 }
             })
-
-            console.log(room)
-
+            
+            //Cant have multiple hosts, must be invalid
             if (room && data.role === "host") return;
-
+            
             if (!room && data.role === "host") {
                 await insert(gameTable, {
                     id: data.code,
                     host: socket.id
                 })
             }
+
+            console.log(data.username, 'joined', data.code);
+            
+            //Persist data in socket
+            data['id'] = socket.id;
+            socket.data = data;
 
             await insert(usersTable, {
                 id: socket.id,
@@ -57,7 +59,6 @@ export default function injectSocketIO(server: HttpServer | null) {
         })
 
         socket.on('presenterScreen', async (user: playerData) => {
-            console.log(user)
             if (socket.data.role !== "host" || !user) return;
             socket.to(socket.data.code).emit('resetView');
             //Set the game presenter
@@ -66,7 +67,6 @@ export default function injectSocketIO(server: HttpServer | null) {
         })
 
         socket.on('assistantScreen', async (user: playerData) => {
-            console.log(user)
             if (socket.data.role !== "host" || !user) return;
             //Set the assistant
             await update(gameTable, { id: socket.data.code, assistant: user.id })
@@ -101,7 +101,7 @@ export default function injectSocketIO(server: HttpServer | null) {
 
             if (room && room.host !== socket.id) return;
 
-            console.log(data.view);
+            console.log(socket.data.code, 'updated view to', data.view);
 
             await update(gameTable, {
                 id: socket.data.code,
@@ -116,11 +116,8 @@ export default function injectSocketIO(server: HttpServer | null) {
                 }
             })
 
-            // console.log(room.host)
-            // console.log(socket.id, room.presenter)
             if (room && socket.id === room.presenter && (direction === "forward" || direction === "back")) {
                 socket.to(room.host).emit('changeSlide', direction);
-                console.log('VALIDATED')
             }
         })
 
@@ -156,31 +153,29 @@ export default function injectSocketIO(server: HttpServer | null) {
     });
 
     io.on('disconnect', async (socket) => {
-        console.log('Client disconnected');
-
         //Check if ever in room
         if (!socket.data) return;
-
+        
         const room = await first(gameTable, {
             where: {
                 id: socket.data.code
             }
         })
-
+        
         if (!room) return;
-
+        
         const user = await first(usersTable, {
             where: {
                 id: socket.id
             }
         })
-
+        
         if (!user) return;
+
+        console.log(user.username, 'disconnected from', socket.data.code);
 
         await remove(usersTable, { id: socket.id });
         socket.to(room.host).emit('disconnectPlayer', { id: socket.id });
-
-        console.log(user);
     })
 
     console.log('SocketIO injected');
