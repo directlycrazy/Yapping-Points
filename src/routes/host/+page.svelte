@@ -168,7 +168,7 @@
 
 <main class="container mx-auto">
 	<div class="items-center">
-		<div class="flex flex-col space-y-3 ml-20 justify-self-end">
+		<div class="flex flex-col space-y-3 ml-20">
 			{#if view === "join"}
 				<div class="space-y-3" transition:fly|local={{ x: 0, y: 200, duration: 700 }}>
 					<h1 class="large font-semibold text-4xl">

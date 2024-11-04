@@ -4,7 +4,7 @@
 
 <main class="flex w-full px-4">
 	<div class="flex items-center justify-center mx-auto">
-		<div class="flex flex-col space-y-3 justify-self-end">
+		<div class="flex flex-col space-y-3">
 			<h1
 				class="large break-words font-black text-7xl lg:text-[130px] lg:leading-[130px]"
 			>

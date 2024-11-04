@@ -101,7 +101,7 @@
 
 <main class="flex w-full px-4">
     <div class="items-center justify-center mx-auto">
-        <div class="flex flex-col space-y-3 justify-self-end">
+        <div class="flex flex-col space-y-3">
             {#if view === "code"}
                 <h1 class="large font-black text-6xl">Join Game</h1>
                 <p>Please enter the code you see on screen to join.</p>
